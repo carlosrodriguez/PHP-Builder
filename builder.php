@@ -1,5 +1,4 @@
 <?php
-$cssfiles = array();
 $loctest = array(
 	"css", "common/css", "styles", "common/styles"
 );
@@ -7,6 +6,10 @@ $loctest = array(
 $location = (isset($_REQUEST['location']) && $_REQUEST['location'] != "") ? $_REQUEST['location'] : substr($_SERVER['SCRIPT_FILENAME'], 0, strrpos($_SERVER['SCRIPT_FILENAME'], "/"));
 $ignore = (isset($_REQUEST['ignore']) && $_REQUEST['ignore'] != "") ? explode(",", $_REQUEST['ignore']) : array();
 $destination = (isset($_REQUEST['destination']) && $_REQUEST['destination'] != "") ? $_REQUEST['destination'] : $location."/build/";
+$order = (isset($_REQUEST['order']) && $_REQUEST['order'] != "") ? $_REQUEST['order'] : '';
+
+$cssfiles = array();
+$cssdirs = array();
 
 // Get CSS files
 foreach($loctest as $t){
@@ -18,6 +21,9 @@ foreach($loctest as $t){
 					if(!is_dir($destination."/".$t)){
 						createdir($destination."/".$t);
 					}
+					if(!in_array($t, $cssdirs)){
+						array_push($cssdirs, $t);
+					}
 					array_push($cssfiles, $location."/".$t."/".$file);
 				}
 			}
@@ -26,11 +32,14 @@ foreach($loctest as $t){
 	}
 }
 
-print_r($cssfiles);
+$setorder = ($order != "") ? explode(",",$order) : array();
+$setorder = array_reverse($setorder);
+
+orderfiles($cssfiles);
 
 // Check if build directory exists. Clean it if ti does
 if(is_dir($destination)){
-	emptydir($destination);
+	//removedir($destination);
 }else{
 	createdir($destination);
 }
@@ -38,6 +47,34 @@ if(is_dir($destination)){
 foreach($cssfiles as $file){
 	copyfile($file, $destination.str_replace($location."/", "", $file));
 }
+
+// Get contents of the files
+//$elements = explode(',', $cssfiles);
+/*$contents = '';
+reset($cssfiles);
+while (list(,$element) = each($cssfiles)) {
+	//$path = realpath($base . '/' . $element);
+	$contents .= "\n\n" . file_get_contents($element);
+}
+
+echo $contents;*/
+
+function orderfiles($cssfiles) {
+	global $setorder, $loctest, $location;
+	
+	foreach($setorder as $file){
+		foreach($loctest as $t){
+			$f = $location."/".$t."/".$file;
+			$me = array_search($f, $cssfiles);
+			if($me){
+				$newfile = array_splice($cssfiles, $me, 1);
+				array_unshift($cssfiles, $newfile[0]);
+				break;
+			}
+		}
+	}
+}
+
 
 
 // Functions
@@ -59,9 +96,12 @@ function emptydir($dir) {
 	$handle = opendir($dir);
 
 	while (($file = readdir($handle))!==false) {
-		if(is_dir($file)){
+		
+		if((is_dir($file)) && ($file != ".") && ($file != "..")){
+			echo $file."<br />";
 			removedir($file);
 		}else{
+		//echo $file."<br />";
 			@unlink($dir.'/'.$file);
 		}
 	}
@@ -74,11 +114,11 @@ function removedir($dir) {
 		$objects = scandir($dir); 
      	foreach ($objects as $object) { 
        		if ($object != "." && $object != "..") { 
-         		//if (filetype($dir."/".$object) == "dir") removedir($dir."/".$object); else unlink($dir."/".$object); 
+         		if (filetype($dir."/".$object) == "dir") removedir($dir."/".$object); else unlink($dir."/".$object); 
        		} 
      	} 
      	reset($objects); 
-     	//rmdir($dir); 
+     	rmdir($dir); 
 	} 
 } 
 
@@ -94,11 +134,11 @@ function createdir($dir){
 }
 
 function copyfile($file, $destination){
-	/*if(copy($file, $destination)){
+	if(copy($file, $destination)){
 		return true;
 	}else{
 		return false;
-	}*/
+	}
 }
 
 
