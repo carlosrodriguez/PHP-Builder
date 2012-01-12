@@ -5,8 +5,10 @@ $loctest = array(
 
 $location = (isset($_REQUEST['location']) && $_REQUEST['location'] != "") ? $_REQUEST['location'] : substr($_SERVER['SCRIPT_FILENAME'], 0, strrpos($_SERVER['SCRIPT_FILENAME'], "/"));
 $ignore = (isset($_REQUEST['ignore']) && $_REQUEST['ignore'] != "") ? explode(",", $_REQUEST['ignore']) : array();
-$destination = (isset($_REQUEST['destination']) && $_REQUEST['destination'] != "") ? $_REQUEST['destination'] : $location."/build/";
+$builddir = (isset($_REQUEST['build']) && $_REQUEST['build'] != "") ? $_REQUEST['build'] : $location."/build/";
+$dist = (isset($_REQUEST['dist']) && $_REQUEST['dist'] != "") ? $_REQUEST['dist'] : $location."/dist/";
 $order = (isset($_REQUEST['order']) && $_REQUEST['order'] != "") ? $_REQUEST['order'] : '';
+$saveas = (isset($_REQUEST['saveas']) && $_REQUEST['saveas'] != "") ? $_REQUEST['saveas'] : "newcss.pack.css";
 
 $cssfiles = array();
 $cssdirs = array();
@@ -18,8 +20,8 @@ foreach($loctest as $t){
 			while (false !== ($file = readdir($handle))) {
 				if($file == '.' || $file == '..') continue;
 				if((findexts($file) == "css") && (!in_array($file, $ignore))){
-					if(!is_dir($destination."/".$t)){
-						createdir($destination."/".$t);
+					if(!is_dir($builddir."/".$t)){
+						createdir($builddir."/".$t);
 					}
 					if(!in_array($t, $cssdirs)){
 						array_push($cssdirs, $t);
@@ -38,17 +40,26 @@ $setorder = array_reverse($setorder);
 $cssfiles = orderfiles($cssfiles);
 
 // Check if build directory exists. Clean it if ti does
-if(is_dir($destination)){
-	//removedir($destination);
-}else{
-	createdir($destination);
+if(!is_dir($builddir)){
+	createdir($builddir);
+}
+
+if(!is_dir($dist)){
+	createdir($dist);
 }
 
 foreach($cssfiles as $file){
-	copyfile($file, $destination.str_replace($location."/", "", $file));
+	copyfile($file, $builddir.str_replace($location."/", "", $file));
 }
 
-echo compress(concat());
+
+//echo compress(concat());
+
+$file = $dist.$saveas;
+echo $file;
+$fh = fopen($file, 'w');
+fwrite($fh, compress(concat()));
+fclose($fh);
 
 // Functions
 /*
@@ -108,8 +119,8 @@ function createdir($dir){
 /*
 Copy files
 */
-function copyfile($file, $destination){
-	if(copy($file, $destination)){
+function copyfile($file, $builddir){
+	if(copy($file, $builddir)){
 		return true;
 	}else{
 		return false;
