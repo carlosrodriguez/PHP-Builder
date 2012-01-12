@@ -56,9 +56,10 @@ foreach($cssfiles as $file){
 //echo compress(concat());
 
 $file = $dist.$saveas;
-echo $file;
 $fh = fopen($file, 'w');
-fwrite($fh, compress(concat()));
+if(!fwrite($fh, compress(concat()))){
+	echo "<br />Can't write file";
+}
 fclose($fh);
 
 // Functions
