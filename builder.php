@@ -35,7 +35,7 @@ foreach($loctest as $t){
 $setorder = ($order != "") ? explode(",",$order) : array();
 $setorder = array_reverse($setorder);
 
-orderfiles($cssfiles);
+$cssfiles = orderfiles($cssfiles);
 
 // Check if build directory exists. Clean it if ti does
 if(is_dir($destination)){
@@ -48,37 +48,9 @@ foreach($cssfiles as $file){
 	copyfile($file, $destination.str_replace($location."/", "", $file));
 }
 
-// Get contents of the files
-//$elements = explode(',', $cssfiles);
-/*$contents = '';
-reset($cssfiles);
-while (list(,$element) = each($cssfiles)) {
-	//$path = realpath($base . '/' . $element);
-	$contents .= "\n\n" . file_get_contents($element);
-}
-
-echo $contents;*/
-
-function orderfiles($cssfiles) {
-	global $setorder, $loctest, $location;
-	
-	foreach($setorder as $file){
-		foreach($loctest as $t){
-			$f = $location."/".$t."/".$file;
-			$me = array_search($f, $cssfiles);
-			if($me){
-				$newfile = array_splice($cssfiles, $me, 1);
-				array_unshift($cssfiles, $newfile[0]);
-				break;
-			}
-		}
-	}
-}
-
-
+echo compress(concat());
 
 // Functions
-
 /*
 Checks if the files has the specified extenstion
 */
@@ -133,12 +105,63 @@ function createdir($dir){
 	}
 }
 
+/*
+Copy files
+*/
 function copyfile($file, $destination){
 	if(copy($file, $destination)){
 		return true;
 	}else{
 		return false;
 	}
+}
+
+/*
+Set the file order
+*/
+function orderfiles($cssfiles) {
+	global $setorder, $loctest, $location;
+	
+	foreach($setorder as $file){
+		foreach($loctest as $t){
+			$f = $location."/".$t."/".$file;
+			$me = array_search($f, $cssfiles);
+			if($me){
+				$newfile = array_splice($cssfiles, $me, 1);
+				array_unshift($cssfiles, $newfile[0]);
+				break;
+			}
+		}
+	}
+	
+	return $cssfiles;
+}
+
+/*
+Concat files
+*/
+function concat(){
+	global $cssfiles;
+	
+	$contents = '';
+	reset($cssfiles);
+	while (list(,$element) = each($cssfiles)) {
+		//$path = realpath($base . '/' . $element);
+		$contents .= "\n\n" . file_get_contents($element);
+	}
+
+	return $contents;
+}
+
+/*
+Compress output
+*/
+function compress($buffer) {
+    /* remove comments */
+    $buffer = preg_replace('!/\*[^*]*\*+([^/][^*]*\*+)*/!', '', $buffer);
+    /* remove tabs, spaces, newlines, etc. */
+    $buffer = str_replace(array("\r\n", "\r", "\n", "\t", '  ', '    ', '    '), '', $buffer);
+    return $buffer;
 }
 
 
